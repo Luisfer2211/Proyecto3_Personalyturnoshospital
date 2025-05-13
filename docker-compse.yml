@@ -14,6 +14,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - hospital-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hospital_admin"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   backend:
     build: ./backend
@@ -27,7 +32,8 @@ services:
       DB_NAME: hospital_db
       DB_PORT: 5432
     depends_on:
-      - postgres
+      - postgres:
+        condition: service_healthy
     networks:
       - hospital-network
     volumes:

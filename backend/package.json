@@ -1,3 +1,18 @@
-cd backend
-npm init -y
-npm install express pg dotenv cors
+{
+  "name": "hospital-backend",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node src/index.js",      
+    "dev": "nodemon src/index.js",   
+    "reinstall": "rm -rf node_modules && npm install"
+  },
+  "dependencies": {
+    "express": "Framework para crear la API",
+    "pg": "Para conectarse a PostgreSQL",
+    "dotenv": "Leer variables del .env",
+    "cors": "Permite conexiones desde el frontend"
+  },
+  "devDependencies": {
+    "nodemon": "Auto-recarga el servidor al hacer cambios (solo desarrollo)"
+  }
+}
