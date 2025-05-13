@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: hospital_db
+    environment:
+      POSTGRES_USER: hospital_admin
+      POSTGRES_PASSWORD: seguro123
+      POSTGRES_DB: hospital_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - hospital-network
+
+  backend:
+    build: ./backend
+    container_name: hospital_backend
+    ports:
+      - "3000:3000"
+    environment:
+      DB_HOST: postgres
+      DB_USER: hospital_admin
+      DB_PASSWORD: seguro123
+      DB_NAME: hospital_db
+      DB_PORT: 5432
+    depends_on:
+      - postgres
+    networks:
+      - hospital-network
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
+
+networks:
+  hospital-network:
+    driver: bridge
