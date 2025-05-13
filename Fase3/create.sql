@@ -83,3 +83,98 @@ CREATE TABLE Horario (
     id_turno INT NOT NULL REFERENCES Turno(id_turno),
     fecha_asignacion DATE NOT NULL DEFAULT CURRENT_DATE
 );
+
+CREATE TABLE Conflictos_Horario (
+    id_conflicto SERIAL PRIMARY KEY,
+    id_empleado INT,
+    fecha_conflicto DATE,
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    mensaje TEXT
+);
+
+CREATE OR REPLACE FUNCTION registrar_conflicto_horario()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 
+        FROM Horario 
+        WHERE id_empleado = NEW.id_empleado 
+        AND fecha_asignacion = NEW.fecha_asignacion
+    ) THEN
+        INSERT INTO Conflictos_Horario (id_empleado, fecha_conflicto, mensaje)
+        VALUES (NEW.id_empleado, NEW.fecha_asignacion, 'Empleado con turno duplicado en misma fecha');
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tr_validar_turnos ON Horario;
+
+CREATE TRIGGER tr_registrar_conflicto
+BEFORE INSERT OR UPDATE ON Horario
+FOR EACH ROW EXECUTE FUNCTION registrar_conflicto_horario();
+
+
+-- Columna derivada (primero debemos agregarla)
+ALTER TABLE Empleado ADD COLUMN antiguedad INTEGER;
+
+-- Trigger Function
+CREATE OR REPLACE FUNCTION actualizar_antiguedad()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.antiguedad := EXTRACT(YEAR FROM AGE(NEW.fecha_ingreso));
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger
+CREATE TRIGGER tr_actualizar_antiguedad
+BEFORE INSERT OR UPDATE OF fecha_ingreso ON Empleado
+FOR EACH ROW EXECUTE FUNCTION actualizar_antiguedad();
+
+
+-- Tabla de auditoría
+CREATE TABLE Auditoria_Historial (
+    id_auditoria SERIAL PRIMARY KEY,
+    id_historial INT,
+    accion VARCHAR(10),
+    fecha_cambio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    diagnostico_anterior TEXT,
+    diagnostico_nuevo TEXT
+);
+
+-- Trigger Function
+CREATE OR REPLACE FUNCTION auditoria_historial_medico()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'UPDATE' THEN
+        INSERT INTO Auditoria_Historial (
+            id_historial, 
+            accion, 
+            diagnostico_anterior, 
+            diagnostico_nuevo
+        ) VALUES (
+            OLD.id_historial,
+            'UPDATE',
+            OLD.diagnostico,
+            NEW.diagnostico
+        );
+    ELSIF TG_OP = 'DELETE' THEN
+        INSERT INTO Auditoria_Historial (
+            id_historial, 
+            accion, 
+            diagnostico_anterior
+        ) VALUES (
+            OLD.id_historial,
+            'DELETE',
+            OLD.diagnostico
+        );
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger
+CREATE TRIGGER tr_auditoria_historial
+AFTER UPDATE OR DELETE ON Historial_Medico
+FOR EACH ROW EXECUTE FUNCTION auditoria_historial_medico();

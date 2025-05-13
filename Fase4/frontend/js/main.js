@@ -28,6 +28,12 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btnExportarPermisos').addEventListener('click', () => exportarExcel('permisos'));
   document.getElementById('btnExportarHistorial').addEventListener('click', () => exportarExcel('historial'));
 
+  
+  document.getElementById('btnExportarTurnosPDF').addEventListener('click', () => exportarPDF('turnos'));
+  document.getElementById('btnExportarIncidenciasPDF').addEventListener('click', () => exportarPDF('incidencias'));
+  document.getElementById('btnExportarPermisosPDF').addEventListener('click', () => exportarPDF('permisos'));
+  document.getElementById('btnExportarHistorialPDF').addEventListener('click', () => exportarPDF('historial'));
+
   // Mostrar reporte inicial
   mostrarReporte('turnos');
 });
@@ -315,6 +321,44 @@ function exportarExcel(tipo) {
   
   // Descargar archivo
   XLSX.writeFile(wb, fileName);
+}
+
+function exportarPDF(tipo) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let table, title;
+
+  switch(tipo) {
+    case 'turnos':
+      table = document.querySelector('#turnos-report table');
+      title = 'Reporte de Turnos';
+      break;
+    case 'incidencias':
+      table = document.querySelector('#incidencias-report table');
+      title = 'Reporte de Incidencias';
+      break;
+    case 'permisos':
+      table = document.querySelector('#permisos-report table');
+      title = 'Reporte de Permisos';
+      break;
+    case 'historial':
+      table = document.querySelector('#historial-report table');
+      title = 'Reporte de Historial Médico';
+      break;
+    default:
+      return;
+  }
+
+  html2canvas(table).then((canvas) => {
+    const imgData = canvas.toDataURL('image/png');
+    const imgWidth = doc.internal.pageSize.getWidth() - 20;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    doc.setFontSize(18);
+    doc.text(title, 10, 10);
+    doc.addImage(imgData, 'PNG', 10, 20, imgWidth, imgHeight);
+    doc.save(`reporte_${tipo}.pdf`);
+  });
 }
 
 // Función para mostrar/ocultar loading
