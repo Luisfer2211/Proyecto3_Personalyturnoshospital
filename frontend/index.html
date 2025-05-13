@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Personal y Turnos - Hospital</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f7f9;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #2c3e50;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 2rem;
+      padding: 2rem;
+    }
+    .card {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h2 {
+      margin-top: 0;
+    }
+    label {
+      display: block;
+      margin: 0.5rem 0 0.2rem;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 0.5rem;
+      text-align: left;
+    }
+    th {
+      background-color: #ecf0f1;
+    }
+    .btn-delete {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-delete:hover {
+      background-color: #c0392b;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Control de Personal y Turnos - Hospital</h1>
+  </header>
+  <div class="container">
+    <div class="card">
+      <h2>Agregar Empleado</h2>
+      <label for="nombre">Nombre:</label>
+      <input type="text" id="nombre" placeholder="Nombre completo">
+
+      <label for="puesto">Puesto:</label>
+      <select id="puesto">
+        <option value="Doctor">Doctor</option>
+        <option value="Enfermera">Enfermera</option>
+        <option value="Administrativo">Administrativo</option>
+      </select>
+
+      <button id="btnAgregar">Agregar Empleado</button>
+    </div>
+
+    <div class="card">
+      <h2>Asignar Turno</h2>
+      <label for="empleado">Empleado:</label>
+      <select id="empleado"></select>
+
+      <label for="fecha">Fecha:</label>
+      <input type="date" id="fecha">
+
+      <label for="turno">Turno:</label>
+      <select id="turno">
+        <option value="Mañana">Mañana</option>
+        <option value="Tarde">Tarde</option>
+        <option value="Noche">Noche</option>
+      </select>
+
+      <button id="btnAsignar">Asignar Turno</button>
+    </div>
+
+    <div class="card" style="grid-column: span 2;">
+      <h2>Lista de Turnos</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Empleado</th>
+            <th>Puesto</th>
+            <th>Fecha</th>
+            <th>Turno</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tablaTurnos">
+          <!-- relleno dinámico -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const empleados = [];
+    const turnos = [];
+
+    const selectEmpleado = document.getElementById('empleado');
+    const tablaTurnos = document.getElementById('tablaTurnos');
+
+    document.getElementById('btnAgregar').addEventListener('click', () => {
+      const nombre = document.getElementById('nombre').value.trim();
+      const puesto = document.getElementById('puesto').value;
+      if (!nombre) return alert('Ingrese un nombre válido');
+      empleados.push({ nombre, puesto });
+      actualizarListadoEmpleados();
+      document.getElementById('nombre').value = '';
+    });
+
+    document.getElementById('btnAsignar').addEventListener('click', () => {
+      const idx = selectEmpleado.value;
+      const fecha = document.getElementById('fecha').value;
+      const turno = document.getElementById('turno').value;
+      if (idx === '') return alert('Seleccione un empleado');
+      if (!fecha) return alert('Seleccione una fecha');
+      const empleado = empleados[idx];
+      turnos.push({ ...empleado, fecha, turno });
+      actualizarTabla();
+      document.getElementById('fecha').value = '';
+    });
+
+    function actualizarListadoEmpleados() {
+      selectEmpleado.innerHTML = '<option value="">-- Seleccione --</option>';
+      empleados.forEach((emp, i) => {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = emp.nombre + ' (' + emp.puesto + ')';
+        selectEmpleado.appendChild(opt);
+      });
+    }
+
+    function actualizarTabla() {
+      tablaTurnos.innerHTML = '';
+      turnos.forEach((t, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${t.nombre}</td>
+          <td>${t.puesto}</td>
+          <td>${t.fecha}</td>
+          <td>${t.turno}</td>
+          <td><button class="btn-delete" onclick="eliminarTurno(${i})">Eliminar</button></td>
+        `;
+        tablaTurnos.appendChild(tr);
+      });
+    }
+
+    window.eliminarTurno = function(i) {
+      turnos.splice(i, 1);
+      actualizarTabla();
+    };
+  </script>
+</body>
+</html>
